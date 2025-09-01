@@ -7,6 +7,8 @@ import SubmitButton from './components/SubmitButton';
 const App = () => {
   const [jobDescription, setJobDescription] = useState('');
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -17,37 +19,36 @@ const App = () => {
     setJobDescription(e.target.value);
   };
 
- // Add this to your SubmitButton component's handleSubmit function
-const handleSubmit = async () => {
-  if (!jobDescription.trim() || !uploadedFile) return;
-  
-  const formData = new FormData();
-  formData.append('job_description', jobDescription);
-  formData.append('file', uploadedFile);
-  
-  try {
-    setIsLoading(true);
-    
-    const response = await fetch('http://localhost:5000/analyze', {
-      method: 'POST',
-      body: formData
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      setAnalysisResult(result);
-      console.log('Analysis Result:', result);
-    } else {
-      alert('Error: ' + result.error);
+  const handleSubmit = async () => {
+    if (!jobDescription.trim() || !uploadedFile) return;
+
+    const formData = new FormData();
+    formData.append('job_description', jobDescription);
+    formData.append('file', uploadedFile);
+
+    try {
+      setIsLoading(true);
+
+      const response = await fetch('http://localhost:5000/analyze', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setAnalysisResult(result);
+        console.log('Analysis Result:', result);
+      } else {
+        alert('Error: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to analyze. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error('Error:', error);
-    alert('Failed to analyze. Please try again.');
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const isFormValid = jobDescription.trim() && uploadedFile;
 
@@ -66,6 +67,16 @@ const handleSubmit = async () => {
       boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
       border: '1px solid rgba(255, 255, 255, 0.2)',
       backdropFilter: 'blur(10px)'
+    },
+    resultBox: {
+      marginTop: '24px',
+      padding: '20px',
+      border: '1px solid #e5e7eb',
+      borderRadius: '12px',
+      backgroundColor: '#f9fafb',
+      fontSize: '14px',
+      color: '#374151',
+      whiteSpace: 'pre-wrap'
     }
   };
 
@@ -83,8 +94,18 @@ const handleSubmit = async () => {
         />
         <SubmitButton 
           onClick={handleSubmit} 
-          disabled={!isFormValid} 
+          disabled={!isFormValid || isLoading} 
+          label={isLoading ? 'Analyzing...' : 'Analyze Resume'}
         />
+
+        {analysisResult && (
+          <div style={styles.resultBox}>
+            <h3 style={{ marginBottom: '12px', fontWeight: '600' }}>
+              Analysis Result
+            </h3>
+            <pre>{JSON.stringify(analysisResult, null, 2)}</pre>
+          </div>
+        )}
       </div>
     </div>
   );
