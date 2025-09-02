@@ -22,33 +22,47 @@ const App = () => {
   const handleSubmit = async () => {
     if (!jobDescription.trim() || !uploadedFile) return;
 
-    const formData = new FormData();
-    formData.append('job_description', jobDescription);
-    formData.append('file', uploadedFile);
-
     try {
       setIsLoading(true);
 
-      const response = await fetch('http://localhost:5000/analyze', {
-        method: 'POST',
-        body: formData
+      // 1️⃣ Upload resume to NeonDB
+      const formDataUpload = new FormData();
+      formDataUpload.append("resume", uploadedFile);
+
+      await fetch("http://localhost:4000/upload", {
+        method: "POST",
+        body: formDataUpload,
       });
+
+      // 2️⃣ Analyze resume + JD
+      // 2️⃣ Analyze resume + JD
+      const formDataAnalyze = new FormData();
+      formDataAnalyze.append("job_description", jobDescription);
+      formDataAnalyze.append("resume", uploadedFile, uploadedFile.name); // ✅ force filename
+
+      const response = await fetch("http://localhost:5000/analyze", {
+        method: "POST",
+        body: formDataAnalyze,
+      });
+
 
       const result = await response.json();
 
       if (result.success) {
         setAnalysisResult(result);
-        console.log('Analysis Result:', result);
+        console.log("Analysis Result:", result);
       } else {
-        alert('Error: ' + result.error);
+        alert("Error: " + result.error);
       }
     } catch (error) {
-      console.error('Error:', error);
-      alert('Failed to analyze. Please try again.');
+      console.error("Error:", error);
+      alert("Failed to analyze. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
+
+
 
   const isFormValid = jobDescription.trim() && uploadedFile;
 
@@ -84,17 +98,17 @@ const App = () => {
     <div style={styles.app}>
       <div style={styles.container}>
         <Header />
-        <JobDescriptionInput 
-          value={jobDescription} 
-          onChange={handleJobDescriptionChange} 
+        <JobDescriptionInput
+          value={jobDescription}
+          onChange={handleJobDescriptionChange}
         />
-        <FileUpload 
-          onFileChange={handleFileChange} 
-          uploadedFile={uploadedFile} 
+        <FileUpload
+          onFileChange={handleFileChange}
+          uploadedFile={uploadedFile}
         />
-        <SubmitButton 
-          onClick={handleSubmit} 
-          disabled={!isFormValid || isLoading} 
+        <SubmitButton
+          onClick={handleSubmit}
+          disabled={!isFormValid || isLoading}
           label={isLoading ? 'Analyzing...' : 'Analyze Resume'}
         />
 

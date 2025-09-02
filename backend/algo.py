@@ -493,34 +493,37 @@ def health_check():
 
 @app.route('/analyze', methods=['POST'])
 def analyze_resume():
-    """Enhanced analysis endpoint"""
     try:
         # Validate inputs
         if 'job_description' not in request.form:
             return jsonify({'error': 'Job description is required'}), 400
-        
-        if 'file' not in request.files:
+
+        # BEFORE (buggy): if 'file' not in request.files:
+        # AFTER (fixed):
+        if 'resume' not in request.files:
             return jsonify({'error': 'Resume file is required'}), 400
-        
+
         job_description = request.form['job_description'].strip()
-        file = request.files['file']
-        
+
+        # BEFORE (buggy): file = request.files['file']
+        # AFTER (fixed):
+        file = request.files['resume']
+
         if not job_description:
             return jsonify({'error': 'Job description cannot be empty'}), 400
-        
+
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
-        
+
         # Extract text from uploaded file
         resume_text = extract_text_from_file(file)
-        
+
         if not resume_text or len(resume_text.strip()) < 50:
             return jsonify({'error': 'Could not extract sufficient text from resume'}), 400
-        
+
         # Get ML prediction
         result = matcher.predict_match(job_description, resume_text)
-        
-        # Enhanced response
+
         response = {
             'success': True,
             'analysis': result,
@@ -528,13 +531,14 @@ def analyze_resume():
             'timestamp': datetime.now().isoformat(),
             'file_processed': file.filename
         }
-        
+
         app.logger.info(f"Analysis completed for {file.filename}")
         return jsonify(response)
-    
+
     except Exception as e:
         app.logger.error(f"Analysis error: {e}")
         return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
+
 
 @app.route('/feedback', methods=['POST'])
 def add_feedback():
