@@ -3,6 +3,7 @@ import Header from './components/Header';
 import JobDescriptionInput from './components/JobDescriptionInput';
 import FileUpload from './components/FileUpload';
 import SubmitButton from './components/SubmitButton';
+import AnalysisResult from './components/AnalysisResult'; // ✅ new import
 
 const App = () => {
   const [jobDescription, setJobDescription] = useState('');
@@ -25,7 +26,7 @@ const App = () => {
     try {
       setIsLoading(true);
 
-      // 1️⃣ Upload resume to NeonDB
+      // Upload file
       const formDataUpload = new FormData();
       formDataUpload.append("resume", uploadedFile);
 
@@ -34,17 +35,15 @@ const App = () => {
         body: formDataUpload,
       });
 
-      // 2️⃣ Analyze resume + JD
-      // 2️⃣ Analyze resume + JD
+      // Analyze JD + Resume
       const formDataAnalyze = new FormData();
       formDataAnalyze.append("job_description", jobDescription);
-      formDataAnalyze.append("resume", uploadedFile, uploadedFile.name); // ✅ force filename
+      formDataAnalyze.append("resume", uploadedFile, uploadedFile.name);
 
       const response = await fetch("http://localhost:5000/analyze", {
         method: "POST",
         body: formDataAnalyze,
       });
-
 
       const result = await response.json();
 
@@ -61,8 +60,6 @@ const App = () => {
       setIsLoading(false);
     }
   };
-
-
 
   const isFormValid = jobDescription.trim() && uploadedFile;
 
@@ -81,16 +78,6 @@ const App = () => {
       boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
       border: '1px solid rgba(255, 255, 255, 0.2)',
       backdropFilter: 'blur(10px)'
-    },
-    resultBox: {
-      marginTop: '24px',
-      padding: '20px',
-      border: '1px solid #e5e7eb',
-      borderRadius: '12px',
-      backgroundColor: '#f9fafb',
-      fontSize: '14px',
-      color: '#374151',
-      whiteSpace: 'pre-wrap'
     }
   };
 
@@ -111,15 +98,7 @@ const App = () => {
           disabled={!isFormValid || isLoading}
           label={isLoading ? 'Analyzing...' : 'Analyze Resume'}
         />
-
-        {analysisResult && (
-          <div style={styles.resultBox}>
-            <h3 style={{ marginBottom: '12px', fontWeight: '600' }}>
-              Analysis Result
-            </h3>
-            <pre>{JSON.stringify(analysisResult, null, 2)}</pre>
-          </div>
-        )}
+        <AnalysisResult analysisResult={analysisResult} />
       </div>
     </div>
   );
